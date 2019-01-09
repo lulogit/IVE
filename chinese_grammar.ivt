@@ -1,0 +1,59 @@
+!domain: "resources.allsetlearning.com/chinese/grammar/*"
+!exists: //*[@id='mw-content-text']
+
+# get the title
+title: /html/body/section/div[3]/div[5]/div[2]/div/div/div[2]/h1/text()
+
+# set cover image
+cover: /html/body/section/div[3]/div[5]/div[2]/div/div/div[4]/div[1]/div[2]/a/img/@src
+
+# set the body to a div, changing it to article
+@replace_tag(<article>): //*[@id='mw-content-text']
+body: $@
+
+# remove useless stuff
+@remove: $body//div[@id='ibox']
+@remove: $body//div[@id='toc']
+@remove: $body//table
+@remove: $body//comment()
+@remove: $body//*[@style='display:none;']
+
+# beautify examples
+@before(<br>): $body//li/span
+@replace("^","("): $body//li/span[@class='expl']
+@replace("$",")"): $body//li/span[@class='expl']
+
+# simplify nested tags
+@simplify: $body
+body: $@
+@replace("[ \t][ \t]+|\n",""): $body//p/text()
+@remove: $body//p[not(text())]
+
+# remove see also appendix
+@remove: $body//h2[contains(., 'See also') or contains(., 'See Also')]/following-sibling::*
+@remove: $body//h2[contains(., 'See also') or contains(., 'See Also')]
+
+?true
+#####   Cleanup   #####
+# Remove all html comments, styles and scripts.
+
+@remove: $body//comment()
+@remove: $body//script
+@remove: $body//style
+
+#####   Simplifying   #####
+# We use the @simplify function to process target nodes according to the Instant View format. The title, subtitle, kicker and cover already exist as separate elements on the Instant View page, so we no longer need them in the article's body.
+
+@simplify: $title
+@remove
+@simplify: $subtitle
+@remove
+@simplify: $kicker
+@remove
+@simplify: $cover
+@remove
+
+# The body element should be an <article> for simplify to work correctly. This is the last step.
+<article>: $body
+@simplify
+body!
